@@ -13,6 +13,7 @@ import { API_ENDPOINT } from './Api';
 const HomePage = () => {
   useEffect(() => {
     console.log('Using API endpoint:', API_ENDPOINT);
+    
   }, []);
   const [user, setUser] = useState(null);
   const [users, setUsers] = useState([]);
@@ -154,15 +155,20 @@ const HomePage = () => {
   const deleteUser = async (userId) => {
     try {
       const headers = await getHeaders();
-      await axios.delete(`${API_ENDPOINT}/user/${userId}`, { headers });
-
+      console.log('Attempting to delete user:', userId); // Add logging
+      
+      const response = await axios.delete(`${API_ENDPOINT}/user/${userId}`, { headers });
+      console.log('Delete response:', response.data); // Log the response
+      
       Alert.alert('Success', 'User successfully deleted');
       setUsers(users.filter(user => user.user_id !== userId));
     } catch (error) {
-      const errorMessage = error.response
-        ? error.response.data?.message || 'Failed to delete user.'
-        : error.message || 'An unexpected error occurred.';
-
+      console.error('Delete error details:', error.response?.data || error.message);
+      
+      const errorMessage = error.response?.data?.error || 
+                            error.response?.data?.message || 
+                            'Failed to delete user. Please try awgain.';
+      
       Alert.alert('Error', errorMessage);
     }
   };
@@ -215,7 +221,13 @@ const HomePage = () => {
       return;
     }
 
-    // Prepare update data
+    // Check if a user is selected
+    if (!selectedUser || !selectedUser.user_id) {
+      Alert.alert('Error', 'No user selected or invalid user ID.');
+      return;
+    }
+
+    // Rest of your function...
     const updateData = {
       fullname,
       username,
@@ -224,7 +236,9 @@ const HomePage = () => {
 
     try {
       const headers = await getHeaders();
-      // Make PUT request to the backend
+      console.log('Sending update for user:', selectedUser.user_id);
+      console.log('Update data:', updateData);
+      
       const { data } = await axios.put(
         `${API_ENDPOINT}/user/${selectedUser.user_id}`,
         updateData,
@@ -326,7 +340,7 @@ const HomePage = () => {
             <FlatList
             data={users}
             renderItem={renderItem}
-            keyExtractor={(item) => item.user_id.toString()}
+            keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
             ListEmptyComponent={() => (
                 <Text style={styles.emptyList}>No users found</Text>
             )}
